@@ -2,8 +2,7 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from cmp_viewer.ImageViewer import ImageViewerUi
-from cmp_viewer import ImageViewer
+from cmp_viewer.startup import StartupWindow
 
 """
 This is the main entry point for the CMP Viewer application.
@@ -26,9 +25,9 @@ def main():
     # Create QApplication instance (remember 1 per project)
     CMPViewer = QApplication(sys.argv)
 
-    # Initialize and show the UI
-    view = ImageViewerUi()
-    view.show()
+    # Initialize and show the Startup UI first
+    startup = StartupWindow()
+    startup.show()
 
     # Execute the main loop (this will block until the application exits)
     sys.exit(CMPViewer.exec_())

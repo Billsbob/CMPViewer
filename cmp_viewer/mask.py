@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from numpy.typing import NDArray
 from typing import Dict, Tuple
-from PyQt5.QtGui import QImage, QColor
+from PyQt5.QtGui import QImage, QColor, QPixmap
 from PyQt5.QtCore import Qt
 from PIL import Image
 from cmp_viewer import utils
@@ -120,3 +120,33 @@ def export_cluster_mask(cluster_id: int, output_path: str, file_format: str = "t
 
     mask_image.save(output_path)
     return True
+
+
+def overlay_masks(base: NDArray[np.float32], masks, colors=None, alpha: float = 0.4) -> QPixmap:
+    """
+    Create an RGB overlay pixmap showing boolean masks over a grayscale base image.
+
+    Args:
+        base: 2D float32 array in [0,1]
+        masks: list of boolean 2D arrays matching base shape
+        colors: list of (R,G,B) tuples, defaults to red/green for two masks
+        alpha: blending factor [0..1]
+
+    Returns:
+        QPixmap with RGB overlay suitable for display in Qt labels.
+    """
+    import numpy as _np
+    if colors is None:
+        colors = [(255, 0, 0), (0, 255, 0)]
+    h, w = base.shape
+    base_u8 = _np.clip(base * 255.0, 0, 255).astype(_np.uint8)
+    rgb = _np.stack([base_u8, base_u8, base_u8], axis=-1).astype(_np.float32)
+    for m, c in zip(masks, colors):
+        if m is None:
+            continue
+        m3 = _np.stack([m, m, m], axis=-1)
+        color_arr = _np.array(c, dtype=_np.float32)[None, None, :]
+        rgb[m3] = (1 - alpha) * rgb[m3] + alpha * color_arr
+    rgb = _np.clip(rgb, 0, 255).astype(_np.uint8)
+    qimg = QImage(rgb.data, w, h, w * 3, QImage.Format_RGB888)
+    return QPixmap.fromImage(qimg.copy())
